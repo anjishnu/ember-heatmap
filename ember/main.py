@@ -34,9 +34,10 @@ def init():
     elif len(rlist)==0:
         print "Seeding Google datastore"
         result = seed_datastore()
+        print (result)
         if result=="DONE":
             start = Start(parent=parentKey, isInitialized="true")
-            start.put()
+            start.put_async()
             print "data store complete - putting start object"
         else:
             print "Exception encountered: No Start entity created"
@@ -89,11 +90,12 @@ def seed_datastore():
         filepath = os.path.join(pathToDump,filename)
         print "Processing", filename
         try:
+            print "trying", filename
             process_tweetfile_ndb(filepath)
+            print "Got output"
             message = "DONE"
         except Exception as e:
             print e.message
-            print traceback.print_exc()
     return message
 
 @app.route('/sample')
