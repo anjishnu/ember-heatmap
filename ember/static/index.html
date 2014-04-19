@@ -658,19 +658,19 @@ var taxiData = [
 }																			 );
   
   gradient = [
-    'rgba(0, 255, 255, 0.5)',
+    'rgba(0, 0, 0, 0)',
     'rgba(10, 10, 10, 0.8)',
     'rgba(10, 10, 10, 1)',
     'rgba(20, 20, 20, 1)',
-    'rgba(30, 30, 30, 1)',
-    'rgba(40, 60, 60, 1)',
-    'rgba(60, 60, 60, 1)',
-    'rgba(80, 80, 80, 1)',
-    'rgba(110, 130, 130, 1)',
-    'rgba(140, 170, 170, 1)',
-    'rgba(170, 210, 210, 1)',
-    'rgba(210, 210, 210, 1)',
-    'rgba(240, 240, 240, 1)',
+    'rgba(30, 60, 60, 1)',
+    'rgba(40, 90, 100, 1)',
+    'rgba(60, 90, 100, 1)',
+    'rgba(80, 130, 130, 1)',
+    'rgba(100, 170, 170, 1)',
+    'rgba(100, 170, 170, 1)',
+    'rgba(100, 210, 210, 1)',
+    'rgba(100, 210, 210, 1)',
+    'rgba(200, 240, 240, 1)',
     'rgba(255, 255, 255, 1)'
   ];
   
@@ -772,22 +772,22 @@ var taxiData = [
 	var populateData = function(list) {
 
 		arraylength = list.length;
-		var taxiData =[];
+		taxiData =[];
 		heatmap.setMap(null);
 		console.log("PopulateData initiated");
 
 		for (i=0;i<arraylength;i++)
-		{	var listentry = list[i];
-			var latitude = listentry[0];
-			var longitude = listentry[1];
+		{	listentry = list[i];
+			latitude = listentry[0];
+			longitude = listentry[1];
 			taxiData.push( new google.maps.LatLng(latitude, longitude));
-			heatmap = new google.maps.visualization.HeatmapLayer({ data: pointArray}
-			heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
-			heatmap.setMap(map);
+			
 		}
 		console.log(taxiData.length);
-		var pointArray = new google.maps.MVCArray(taxiData);
-		);
+		pointArray = new google.maps.MVCArray(taxiData);
+			heatmap = new google.maps.visualization.HeatmapLayer({ data: pointArray});
+			heatmap.set('gradient', heatmap.get('gradient') ? null : gradient);
+			heatmap.setMap(map);
 		
 
 		console.log("Complete");

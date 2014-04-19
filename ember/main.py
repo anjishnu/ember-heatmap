@@ -42,7 +42,8 @@ def init():
         else:
             print "Exception encountered: No Start entity created"
     return
-        
+
+
 @app.route('/')
 def hello():
     """Return a friendly HTTP greeting."""
