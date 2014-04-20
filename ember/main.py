@@ -4,15 +4,15 @@
 # Import the Flask Framework
 
 import appengine_config
-from google.appengine.api import memcache
+from google.appengine.api import memcache, taskqueue
 from flask import Flask, send_from_directory, redirect, request
 from google.appengine.ext import ndb
 import json
 from datetime import datetime as dt
 import os
 import traceback
-
-from tweetutils import Tweetbit, process_tweetfile_ndb, parse_list_of_tweetbits
+import logging
+from tweetutils import Tweetbit, process_tweetfile_ndb, parse_list_of_tweetbits, tweet_put
 from tweetutils import text_parse
 
 app = Flask(__name__)
@@ -23,7 +23,7 @@ app = Flask(__name__)
 class Start(ndb.Model):
     isInitialized = ndb.StringProperty()
     
-@app.before_first_request
+
 def init():
     rlist = []
     parentKey = ndb.Key("State", "loaded")
@@ -48,6 +48,28 @@ def init():
 def hello():
     """Return a friendly HTTP greeting."""
     return redirect("/static/index.html")
+
+@app.route("/init")
+@ndb.toplevel
+def initialize():
+    rlist = []
+    parentKey = ndb.Key("State", "loaded")
+    rlist=Start.query().fetch(1)
+    result = "NOT DONE"
+    if len(rlist)>0:
+        logging.info("Datastore initialized: Skipping data load")
+        pass
+    elif len(rlist)==0:
+        logging.info( "Seeding Google datastore")
+        result = seed_datastore()
+        print (result)
+        if result=="DONE":
+            start = Start(parent=parentKey, isInitialized="true")
+            start.put_async()
+            logging.info("data store complete - putting start object")
+        else:
+            logging.error("Exception encountered: No Start entity created")
+    return "INITIALIZED" + result
 
 @app.route('/insert')
 def insert():
@@ -83,22 +105,52 @@ def search():
             response_data = parse_list_of_tweetbits(out)
             memcache.add(key=term,value=response_data, time=3600)
     return response_data
+
+def queue_tasks_in_file(filepath):
+    logging.info("Putting"+filepath+" tweets into ndb")
+    f = open(filepath,'r')
+    for tweet_json in f:
+        queue_tweet(tweet_json)
+    logging.info(filepath + "queued")
+    return "ok"
+
+def queue_tweet(tweet_json):
+    taskqueue.add(url="/insert_tweet", params={"json_data":tweet_json})
+    return 'ok'
+
+@app.route("/add_tweets", methods=["POST"])
+def queue_tweet_list_json():
+    json_obj = request.get_json(force=True)
+    logging.info(json.dumps(json_obj))
+    
+
+@app.route("/insert_tweet", methods=['POST'])
+@ndb.toplevel
+def insert_tweet():
+    json_data = request.form["json_data"]
+    #logging.info(json_data)
+    tweet_put(json_data)
+    #logging.info("Tweet Inserted")
+    return "Put json_data"
+
     
 def seed_datastore():
     pathToDump = os.path.join(os.getcwd(),"tweet_dump")
     message = "NOT DONE"
+    print os.listdir(pathToDump)
     for filename in os.listdir(pathToDump):
         filepath = os.path.join(pathToDump,filename)
         print "Processing", filename
         try:
             print "trying", filename
-            process_tweetfile_ndb(filepath)
+            #process_tweetfile_ndb(filepath)
+            queue_tasks_in_file(filepath)
             print "Got output"
             message = "DONE"
         except Exception as e:
-            print e.message
+            logging.error(e.message)
     return message
-
+    
 @app.route('/sample')
 def sample():
     output = {}
