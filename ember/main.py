@@ -122,7 +122,11 @@ def queue_tweet(tweet_json):
 def queue_tweet_list_json():
     json_obj = request.get_json(force=True)
     logging.info(json.dumps(json_obj))
-    
+    for index, tweet in enumerate(json_obj):
+        if index<1000:
+            queue_tweet(json.dumps(tweet))
+    logging.info("Queued tweets")
+    return json.dumps(json_obj)
 
 @app.route("/insert_tweet", methods=['POST'])
 @ndb.toplevel
